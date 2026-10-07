@@ -1,0 +1,97 @@
+---
+// src/components/SiteMenu.astro
+// A dropdown menu for the Pip site's header. The leaf on the button lifts when the menu opens.
+interface Props { current?: "home" | "case" | "system" | "app" }
+const { current } = Astro.props;
+const items = [
+  { slug: "home", href: "/", title: "Meet Pip", note: "What Pip is and how it works", tone: "#8a7bd8" },
+  { slug: "case", href: "/pip", title: "Case study", note: "How Pip was designed and built", tone: "#4fb9a1" },
+  { slug: "system", href: "/pip-system", title: "Design system", note: "Colour, type and the Pip component", tone: "#6fae7f" },
+  { slug: "app", href: "/pip-app", title: "Live app", note: "Try every screen in your browser", tone: "#f0a92e" }
+];
+---
+
+<div class="sm" data-site-menu>
+  <button class="sm-btn" type="button" aria-expanded="false" aria-controls="sm-panel">
+    <span class="sm-leaf" aria-hidden="true"></span>
+    Menu
+  </button>
+  <div class="sm-panel" id="sm-panel" hidden>
+    <ul>
+      {items.map((it, i) => (
+        <li style={`--tone:${it.tone}; --d:${i * 50}ms`}>
+          <a href={it.href} aria-current={it.slug === current ? "page" : undefined}>
+            <span class="sm-dot" aria-hidden="true"></span>
+            <span class="sm-text"><span class="sm-title">{it.title}</span><span class="sm-note">{it.note}</span></span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+  </div>
+</div>
+
+<script is:inline>
+(() => {
+  document.querySelectorAll('[data-site-menu]').forEach((root) => {
+    if (root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const btn = root.querySelector('.sm-btn');
+    const panel = root.querySelector('.sm-panel');
+    const open = (yes) => {
+      btn.setAttribute('aria-expanded', String(yes));
+      if (yes) { panel.hidden = false; requestAnimationFrame(() => root.classList.add('open')); }
+      else { root.classList.remove('open'); panel.hidden = true; }
+    };
+    btn.addEventListener('click', () => open(btn.getAttribute('aria-expanded') !== 'true'));
+    // Escape closes the menu and returns focus to the button
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { open(false); btn.focus(); } });
+    // Clicking or tabbing outside closes it
+    document.addEventListener('click', (e) => { if (!root.contains(e.target)) open(false); });
+    root.addEventListener('focusout', (e) => { if (e.relatedTarget && !root.contains(e.relatedTarget)) open(false); });
+  });
+})();
+</script>
+
+<style>
+  .sm { position: relative; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+  .sm-btn {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px;
+    border: 2px solid #0e2a2f; border-radius: 14px; background: #f6f9f3; color: #0e2a2f;
+    font: 600 15px 'Bricolage Grotesque', system-ui, sans-serif; cursor: pointer;
+  }
+  .sm-btn:hover { background: #e6ede4; }
+  .sm-btn:focus-visible { outline: 3px solid #0e2a2f; outline-offset: 3px; }
+  /* The leaf droops when closed and lifts when open */
+  .sm-leaf { width: 14px; height: 10px; border-radius: 0 100% 0 100%; background: #6fae7f; transform: rotate(45deg); transition: transform .5s cubic-bezier(.3, 1.6, .5, 1); }
+  .sm.open .sm-leaf { transform: rotate(-25deg); }
+
+  .sm-panel {
+    position: absolute; right: 0; top: calc(100% + 10px); z-index: 50; width: min(320px, calc(100vw - 32px));
+    padding: 10px; background: #f6f9f3; border: 2px solid #0e2a2f; border-radius: 24px;
+    box-shadow: 0 24px 50px -24px rgba(14, 42, 47, .45);
+    transform-origin: top right; transform: scale(.92) translateY(-6px); opacity: 0;
+    transition: transform .3s cubic-bezier(.3, 1.4, .5, 1), opacity .2s;
+  }
+  .sm.open .sm-panel { transform: none; opacity: 1; }
+  .sm-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .sm-panel li { opacity: 0; transform: translateY(6px); transition: opacity .25s var(--d), transform .3s var(--d); }
+  .sm.open .sm-panel li { opacity: 1; transform: none; }
+  .sm-panel li a {
+    display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 12px; border-radius: 16px;
+    color: #0e2a2f; text-decoration: none; transition: background .2s;
+  }
+  .sm-panel li a:hover, .sm-panel li a:focus-visible { background: color-mix(in srgb, var(--tone) 28%, #f6f9f3); outline: none; }
+  .sm-panel li a:focus-visible { box-shadow: inset 0 0 0 2px #0e2a2f; }
+  .sm-dot { flex: none; width: 16px; height: 20px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--tone); }
+  .sm-text { display: grid; gap: 2px; }
+  .sm-title { font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+  .sm-note { font-size: 14px; color: #46605f; }
+  .sm-panel a[aria-current="page"] .sm-title::after { content: " (this page)"; font-weight: 400; font-size: 13px; color: #46605f; }
+  .sm-port { display: flex; align-items: center; min-height: 44px; margin-top: 6px; padding: 0 12px; border-top: 2px solid #e6ede4; color: #0e2a2f; font-weight: 600; font-size: 14px; text-underline-offset: 4px; }
+  .sm-port:focus-visible { outline: 3px solid #0e2a2f; outline-offset: 2px; border-radius: 10px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sm-leaf, .sm-panel, .sm-panel li, .sm-panel li a { transition: none; }
+  }
+</style>

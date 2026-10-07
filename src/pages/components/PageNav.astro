@@ -1,0 +1,63 @@
+---
+// src/components/PageNav.astro
+// Previous and next links between the Pip site's pages, in reading order.
+const pages = [
+  { slug: "home", href: "/", title: "Meet Pip", note: "The home page", tone: "#8a7bd8" },
+  { slug: "case", href: "/pip", title: "The case study", note: "How Pip was designed", tone: "#4fb9a1" },
+  { slug: "system", href: "/pip-system", title: "The design system", note: "Colour, type and the Pip component", tone: "#6fae7f" },
+  { slug: "app", href: "/pip-app", title: "The live app", note: "Try Pip yourself", tone: "#f0a92e" }
+];
+
+interface Props { current: "home" | "case" | "system" | "app" }
+const { current } = Astro.props;
+const i = pages.findIndex((p) => p.slug === current);
+const prev = i > 0 ? pages[i - 1] : null;
+// The last page loops back to the home page, so there's always a way on
+const next = i >= 0 && i < pages.length - 1 ? pages[i + 1] : (i > 0 ? pages[0] : null);
+const nextLabel = i === pages.length - 1 ? "Back to the start" : "Next";
+---
+
+<nav class="pn" aria-label="More about Pip">
+  {prev ? (
+    <a class="pn-link pn-prev" href={prev.href} style={`--tone:${prev.tone}`}>
+      <span class="pn-dir"><span class="pn-leaf" aria-hidden="true"></span>Previous</span>
+      <span class="pn-name">{prev.title}</span>
+      <span class="pn-note">{prev.note}</span>
+    </a>
+  ) : <span aria-hidden="true"></span>}
+  {next && (
+    <a class="pn-link pn-next" href={next.href} style={`--tone:${next.tone}`}>
+      <span class="pn-dir">{nextLabel}<span class="pn-leaf" aria-hidden="true"></span></span>
+      <span class="pn-name">{next.title}</span>
+      <span class="pn-note">{next.note}</span>
+    </a>
+  )}
+</nav>
+
+<style>
+  .pn { max-width: 1100px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 24px) 96px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+  .pn-link {
+    position: relative; overflow: hidden; isolation: isolate;
+    display: flex; flex-direction: column; gap: 6px; min-height: 44px; padding: 26px 28px;
+    background: #f6f9f3; color: #0e2a2f; text-decoration: none; border: 2px solid #0e2a2f; border-radius: 28px;
+    transition: transform .25s cubic-bezier(.3, 1.4, .5, 1);
+  }
+  /* The card fills with the page's mood colour from the side you're heading towards */
+  .pn-link::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--tone) 32%, #f6f9f3);
+    transform: scaleX(0); transform-origin: left; transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+  }
+  .pn-prev::before { transform-origin: right; }
+  .pn-link:hover { transform: translateY(-3px); }
+  .pn-link:hover::before, .pn-link:focus-visible::before { transform: scaleX(1); }
+  .pn-link:focus-visible { outline: 3px solid #0e2a2f; outline-offset: 4px; }
+  .pn-next { text-align: right; align-items: flex-end; }
+  .pn-dir { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; color: #46605f; }
+  .pn-name { font-weight: 800; font-size: clamp(1.5rem, 3vw, 2.2rem); letter-spacing: -.035em; line-height: 1; }
+  .pn-note { font-size: 15px; color: #46605f; }
+  /* A leaf that droops at rest and lifts on hover, like Pip's */
+  .pn-leaf { width: 14px; height: 10px; border-radius: 0 100% 0 100%; background: var(--tone); transform: rotate(40deg); transition: transform .45s cubic-bezier(.3, 1.6, .5, 1); }
+  .pn-link:hover .pn-leaf, .pn-link:focus-visible .pn-leaf { transform: rotate(-20deg); }
+  @media (max-width: 640px) { .pn { grid-template-columns: 1fr; } .pn-next { text-align: left; align-items: flex-start; } .pn > span[aria-hidden] { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .pn-link, .pn-link::before, .pn-leaf { transition: none; } .pn-link:hover { transform: none; } }
+</style>

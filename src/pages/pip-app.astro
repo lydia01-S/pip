@@ -1,0 +1,580 @@
+---
+// src/pages/pip-app.astro
+import SiteMenu from './components/SiteMenu.astro';
+import PageNav from './components/PageNav.astro';
+---
+<!DOCTYPE html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Try Pip: the live app</title>
+<meta name="description" content="Try Pip in your browser: check in by moving Pip, log sleep and doses, breathe with Pip and see your week. Everything is saved in your browser only.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style is:global>
+:root{--bg:#e6ede4;--fg:#0e2a2f;--mute:#4f6b6d;--card:#f6f9f3;--line:#b8c9c0;--line-strong:#718a84;--dusk:#8a7bd8;--glass:#4fb9a1;--amber:#f0a92e;--font:'Bricolage Grotesque',system-ui,sans-serif;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e2a2f;--fg:#e6ede4;--mute:#9db8b4;--card:#16383d;--line:#2c5459;--line-strong:#5f8b8c;--dusk:#a597f0;--glass:#7fd8c3;--amber:#ffc15e}}
+:root[data-theme="dark"]{--bg:#0e2a2f;--fg:#e6ede4;--mute:#9db8b4;--card:#16383d;--line:#2c5459;--line-strong:#5f8b8c;--dusk:#a597f0;--glass:#7fd8c3;--amber:#ffc15e}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);padding:12px 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.crumbs,.top,.stage{max-width:960px;margin:0 auto}
+.crumbs{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:20px}
+.crumbs > a{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--fg);font:600 15px var(--font);text-decoration:none;padding:0 4px}
+.crumbs > a:hover{text-decoration:underline;text-underline-offset:4px}
+.top{margin-bottom:24px}
+.top h1{font-size:clamp(34px,6vw,56px);font-weight:800;letter-spacing:-.03em;line-height:1;margin:0 0 10px}
+.top p{margin:0;color:var(--mute);max-width:56ch;line-height:1.5}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Layout: the phone, with designer notes beside it */
+.stage{display:grid;grid-template-columns:minmax(0,390px) 1fr;gap:48px;align-items:start}
+@media (max-width:780px){.stage{grid-template-columns:1fr}}
+.phone{width:100%;max-width:390px;margin:0 auto;height:min(800px,calc(100svh - 24px));min-height:640px;border-radius:44px;background:var(--card);border:2px solid var(--line);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.screens{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:26px 24px 20px}
+.view{display:flex;flex-direction:column;min-height:100%}
+.view[hidden]{display:none}
+.view h2:focus{outline:none}
+
+/* In-phone navigation */
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--line);background:var(--card);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar[hidden]{display:none}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:56px;justify-content:center;border:0;border-radius:16px;background:none;color:var(--mute);font:600 12px var(--font);cursor:pointer}
+.tabbar button[aria-current="page"]{color:var(--fg);background:var(--bg)}
+.tabbar svg{width:22px;height:22px}
+
+/* Shared parts */
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.brand{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.brand::before{content:"";width:12px;height:16px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:var(--glass)}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;border:2px solid var(--line-strong);background:none;color:var(--fg);cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+h2{font-size:32px;line-height:1.04;letter-spacing:-.03em;font-weight:800;margin:20px 0 0}
+.sub{color:var(--mute);font-size:15px;margin:8px 0 0;line-height:1.45}
+.vwrap{flex:1;display:grid;place-items:center;padding:8px 0;min-height:200px}
+.pip{width:min(210px,56vw);height:auto;display:block;color:var(--fg);touch-action:none;overflow:visible}
+.pip.drag{cursor:grab}.pip.drag:active{cursor:grabbing}
+.bob{animation:bob 3.2s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-5px)}}
+.eyes{animation:blink 5s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.hop{animation:hop .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes hop{40%{transform:translateY(-14px)}}
+.btn{width:100%;min-height:56px;margin-top:16px;border:0;border-radius:18px;background:var(--fg);color:var(--bg);font:600 17px var(--font);cursor:pointer;transition:transform .15s,background .3s}
+.btn:active{transform:scale(.98)}.btn.ok{background:var(--glass);color:#0e2a2f}
+.btn.quiet{background:none;color:var(--fg);border:2px solid var(--line-strong);margin-top:10px}
+.btn.small{min-height:44px;margin-top:0;font-size:15px;border-radius:14px}
+.field{display:grid;gap:6px;margin-top:14px;font-size:14px;font-weight:600}
+.field input,.field textarea{width:100%;font:400 16px var(--font);color:var(--fg);background:var(--bg);border:2px solid var(--line-strong);border-radius:14px;padding:12px 14px}
+.field textarea{min-height:64px;resize:vertical}
+.count{font-weight:400;color:var(--mute);font-size:12px;justify-self:end}
+
+/* Today */
+.today-pip{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin-top:16px;padding:14px;border-radius:22px;background:var(--bg)}
+.today-pip .pip{width:96px}
+.today-pip b{display:block;font-size:24px;letter-spacing:-.03em}
+.tiles{display:grid;gap:10px;margin-top:14px}
+.tile{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;width:100%;min-height:68px;padding:12px 16px;border-radius:18px;border:2px solid var(--line-strong);background:none;color:var(--fg);font:500 15px var(--font);text-align:left;cursor:pointer}
+.tile b{display:block;font-size:17px}
+.tile span{color:var(--mute);font-size:14px}
+.tile i{font-style:normal;font-weight:600;font-size:14px;padding:6px 12px;border-radius:999px;background:var(--bg)}
+.tile.done i{background:var(--glass);color:#0e2a2f}
+
+/* Mood */
+.read{display:flex;justify-content:space-between;align-items:end;gap:12px}
+.word{font-size:40px;font-weight:800;letter-spacing:-.035em;line-height:1}
+.hint{font-size:13px;color:var(--mute);text-align:right;max-width:14ch;line-height:1.3}
+
+/* Sleep */
+.big{font-size:68px;font-weight:800;letter-spacing:-.05em;line-height:.9;text-align:center}
+.big small{font-size:20px;font-weight:600;letter-spacing:0;margin-left:6px;color:var(--mute)}
+.step{display:flex;align-items:center;justify-content:center;gap:22px;margin-top:14px}
+.round{width:52px;height:52px;border-radius:50%;border:2px solid var(--line-strong);background:none;color:var(--fg);font:600 26px var(--font);cursor:pointer}
+.round:active{background:var(--line)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.seg button{min-height:48px;border-radius:14px;border:2px solid var(--line-strong);background:none;color:var(--fg);font:500 15px var(--font);cursor:pointer}
+.seg button[aria-pressed=true]{border-color:var(--fg);background:var(--bg);font-weight:600}
+
+/* Doses */
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.head .pip{width:92px}
+.doses{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
+.doses li{display:flex;gap:8px}
+.dose{flex:1;display:flex;align-items:center;gap:14px;text-align:left;border:2px solid var(--line-strong);border-radius:18px;background:none;color:var(--fg);padding:14px 16px;font:500 16px var(--font);cursor:pointer;transition:background .3s,border-color .3s}
+.dose b{display:block;font-weight:600}.dose span{color:var(--mute);font-size:13px}
+.dose i{margin-left:auto;width:28px;height:28px;flex:none;border-radius:50%;border:2px solid var(--line-strong);display:grid;place-items:center;font-style:normal;font-size:15px;color:transparent;transition:background .3s}
+.dose[aria-pressed=true]{background:var(--bg);border-color:var(--glass)}
+.dose[aria-pressed=true] i{background:var(--glass);border-color:var(--glass);color:#0e2a2f}
+.dose[aria-pressed=true] b{text-decoration:line-through;text-decoration-color:var(--mute)}
+.rm{flex:none;width:52px;border-radius:18px;border:2px solid var(--line-strong);background:none;color:var(--fg);font:600 22px var(--font);cursor:pointer}
+.add-form{margin-top:12px;padding:14px;border-radius:18px;background:var(--bg)}
+.add-form[hidden]{display:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.err{color:var(--fg);font-size:14px;margin:8px 0 0;font-weight:600}
+.empty{color:var(--mute);font-size:15px;margin:16px 0 0}
+
+/* Breathe */
+.bw{transition:transform 4s ease-in-out}
+.cue{font-size:30px;font-weight:800;letter-spacing:-.03em;text-align:center;min-height:38px}
+.rounds{text-align:center;color:var(--mute);font-size:14px;min-height:20px;margin-top:4px}
+
+/* Week */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:20px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:2px solid transparent;border-radius:14px;padding:6px 0;color:var(--mute);font:500 12px var(--font);cursor:pointer}
+.day .pip{width:100%}
+.day .none{width:70%;aspect-ratio:1;border-radius:50%;border:2px dashed var(--line-strong);margin:8px 0}
+.day[aria-pressed=true]{border-color:var(--fg);color:var(--fg);font-weight:600;background:var(--bg)}
+.detail{margin-top:18px;border-radius:20px;background:var(--bg);padding:16px}
+.detail b{font-size:24px;letter-spacing:-.03em;display:block;margin-bottom:6px}
+.detail p{margin:4px 0 0;color:var(--mute);font-size:15px;line-height:1.45}
+.tag[hidden]{display:none}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--line);color:var(--fg);margin-top:8px}
+
+/* Welcome */
+.dots{display:flex;gap:6px;margin-top:20px}
+.dots i{width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .3s,background .3s}
+.dots i.on{width:24px;background:var(--fg)}
+
+/* Status message */
+.toast{position:absolute;left:50%;bottom:86px;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--fg);color:var(--bg);font-weight:600;font-size:15px;padding:12px 18px;border-radius:14px;transition:opacity .25s,transform .25s;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Notes beside the phone */
+.notes h3{font-size:22px;letter-spacing:-.02em;margin:0 0 14px}
+.notes p{color:var(--mute);line-height:1.6;margin:0 0 14px;max-width:46ch}
+.notes strong{color:var(--fg);font-weight:600}
+.privacy{font-size:14px;color:var(--mute);border-top:2px solid var(--line);padding-top:14px;margin-top:20px;max-width:46ch;line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){.bob,.eyes,.hop{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav class="crumbs" aria-label="Pip pages">
+  <a href="/"><span aria-hidden="true">←</span> Back to Pip</a>
+  <SiteMenu current="app" />
+</nav>
+<header class="top">
+  <h1>Try Pip</h1>
+  <p>A working version of Pip. Check in, log your sleep and doses, breathe, and watch your week fill in. Everything you enter stays in this browser.</p>
+</header>
+
+<div class="stage">
+  <div class="phone" id="phone">
+    <div class="screens" id="screens">
+
+      <section class="view" id="intro" aria-labelledby="intro-h" hidden>
+        <div class="brand">Pip</div>
+        <div class="vwrap"><div id="introPip"></div></div>
+        <div class="dots" id="introDots" aria-hidden="true"></div>
+        <h2 id="intro-h" tabindex="-1">Hi, I'm Pip</h2>
+        <p class="sub" id="introText"></p>
+        <button class="btn" id="introNext">Next</button>
+        <button class="btn quiet" id="introSkip">Skip the intro</button>
+      </section>
+
+      <section class="view" id="today" aria-labelledby="today-h" hidden>
+        <div class="row"><div class="brand">Pip</div>
+          <button class="icon-btn" id="openSettings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+        </div>
+        <h2 id="today-h" tabindex="-1">Good morning</h2>
+        <p class="sub" id="todayDate"></p>
+        <div class="today-pip"><div id="todayPip"></div><div><b id="todayMood">No check-in yet</b><span class="sub" id="todayMoodSub" style="margin:0">How's today going?</span></div></div>
+        <div class="tiles">
+          <button class="tile" data-go="mood"><div><b>Mood</b><span id="tMood">Not checked in</span></div><i id="tMoodTag">Check in</i></button>
+          <button class="tile" data-go="sleep"><div><b>Sleep</b><span id="tSleep">Not logged</span></div><i id="tSleepTag">Add</i></button>
+          <button class="tile" data-go="doses"><div><b>Doses</b><span id="tDoses"></span></div><i id="tDosesTag">Open</i></button>
+        </div>
+      </section>
+
+      <section class="view" id="mood" aria-labelledby="mood-h" hidden>
+        <div class="brand">Pip</div>
+        <h2 id="mood-h" tabindex="-1">How was today, overall?</h2>
+        <div class="vwrap"><div id="moodPip"></div></div>
+        <div class="read"><div class="word" id="moodWord" aria-live="polite">Steady</div><div class="hint">Drag Pip up or down, or use the arrow keys</div></div>
+        <label class="field">Anything to remember? (optional)
+          <textarea id="moodNote" maxlength="140" placeholder="A walk at lunch, a long day…"></textarea>
+          <span class="count" id="noteCount">0 / 140</span>
+        </label>
+        <button class="btn" id="moodSave">Save check-in</button>
+      </section>
+
+      <section class="view" id="sleep" aria-labelledby="sleep-h" hidden>
+        <div class="brand">Pip</div>
+        <h2 id="sleep-h" tabindex="-1">How long did you sleep?</h2>
+        <div class="vwrap"><div id="sleepPip"></div></div>
+        <div class="big"><span id="hours">7.5</span><small>hours</small></div>
+        <div class="step"><button class="round" id="lessSleep" aria-label="Half an hour less">−</button><button class="round" id="moreSleep" aria-label="Half an hour more">+</button></div>
+        <p class="sub" id="feelLabel" style="margin-top:16px">How did it feel?</p>
+        <div class="seg" id="feel" role="group" aria-labelledby="feelLabel"></div>
+        <button class="btn" id="sleepSave">Save sleep</button>
+      </section>
+
+      <section class="view" id="doses" aria-labelledby="doses-h" hidden>
+        <div class="head"><div><div class="brand">Pip</div><h2 id="doses-h" tabindex="-1" style="margin-top:16px">Today's doses</h2><p class="sub" id="doseCount">0 of 0 taken</p></div><div id="dosePip"></div></div>
+        <ul class="doses" id="doseList"></ul>
+        <p class="empty" id="doseEmpty" hidden>No doses yet. Add one below.</p>
+        <div class="two"><button class="btn small quiet" id="addDose" style="margin:0">Add a dose</button><button class="btn small quiet" id="editDoses" style="margin:0" aria-pressed="false">Edit</button></div>
+        <form class="add-form" id="addForm" hidden novalidate>
+          <label class="field" style="margin-top:0">Name<input id="doseName" maxlength="30" autocomplete="off" /></label>
+          <label class="field">Time<input id="doseTime" type="time" value="09:00" /></label>
+          <p class="err" id="doseErr" role="alert" hidden>Enter a name for the dose, like Vitamin D.</p>
+          <div class="two"><button class="btn small" type="submit" style="margin:0">Add dose</button><button class="btn small quiet" type="button" id="cancelDose" style="margin:0">Cancel</button></div>
+        </form>
+      </section>
+
+      <section class="view" id="breathe" aria-labelledby="breathe-h" hidden>
+        <div class="brand">Pip</div>
+        <h2 id="breathe-h" tabindex="-1">Breathe with Pip</h2>
+        <div class="seg" id="pattern" role="group" aria-label="Breathing pattern" style="grid-template-columns:1fr 1fr;margin-top:14px"></div>
+        <div class="vwrap"><div class="bw" id="bw"><div id="breathePip"></div></div></div>
+        <div class="cue" id="cue" aria-live="polite">Ready when you are</div>
+        <div class="rounds" id="rounds"></div>
+        <button class="btn" id="breatheBtn">Start</button>
+      </section>
+
+      <section class="view" id="week" aria-labelledby="week-h" hidden>
+        <div class="brand">Pip</div>
+        <h2 id="week-h" tabindex="-1">Your week</h2>
+        <p class="sub" id="insight"></p>
+        <div class="days" id="days"></div>
+        <div class="detail" aria-live="polite"><b id="dayWord"></b><p id="dayFacts"></p><p id="dayNote"></p><span class="tag" id="daySample" hidden>Sample data</span></div>
+      </section>
+
+      <section class="view" id="settings" aria-labelledby="settings-h" hidden>
+        <div class="row"><div class="brand">Pip</div><button class="icon-btn" id="closeSettings" aria-label="Back to today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+        <h2 id="settings-h" tabindex="-1">Settings</h2>
+        <p class="sub" id="themeLabel" style="margin-top:20px">Appearance</p>
+        <div class="seg" id="theme" role="group" aria-labelledby="themeLabel"></div>
+        <button class="btn quiet" id="replayIntro" style="margin-top:22px">Replay the intro</button>
+        <button class="btn quiet" id="resetData">Reset all data</button>
+        <p class="sub" style="margin-top:18px">Your check-ins are saved in this browser only. Nothing is sent anywhere. The six days before today start as sample data.</p>
+      </section>
+
+    </div>
+
+    <nav class="tabbar" id="tabbar" aria-label="App">
+      <button data-go="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Today</button>
+      <button data-go="mood"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5c5 0 8 4 8 8s-3 7-8 7-8-3-8-7 3-8 8-8z"/><path d="M12 5c0-2 1-3 3-3"/></svg>Check in</button>
+      <button data-go="doses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-35 12 12.5)"/><path d="M9.5 8.5l5 7"/></svg>Doses</button>
+      <button data-go="breathe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8.5" stroke-dasharray="3 3"/></svg>Breathe</button>
+      <button data-go="week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Week</button>
+    </nav>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <aside class="notes">
+    <div id="notes" aria-live="polite"></div>
+    <p class="privacy">This is a concept app. Your entries are saved in this browser only and never leave your device. Pip isn't a medical tool and doesn't give medical advice.</p>
+  </aside>
+</div>
+
+<PageNav current="app" />
+
+<script is:inline>
+(() => {
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INK = '#0e2a2f';
+const WORDS = ['Drained', 'Low', 'Flat', 'Steady', 'Light', 'Good', 'Glowing'];
+const FEELS = ['Restless', 'Okay', 'Rested'];
+const DAYNAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/* ---------- Saved data ---------- */
+const KEY = 'pip-app-v1';
+const dkey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const dayOffset = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - n); return d; };
+function fresh() {
+  const doses = [{ id: 'd1', name: 'Vitamin D', time: '08:00' }, { id: 'd2', name: 'Iron', time: '12:30' }, { id: 'd3', name: 'Magnesium', time: '18:00' }, { id: 'd4', name: 'Antihistamine', time: '22:00' }];
+  const sample = [[2, 6, 'Restless', 3], [1, 5.5, 'Restless', 4], [3, 7, 'Okay', 4], [3, 7.5, 'Okay', 2], [4, 8, 'Rested', 4], [5, 8.5, 'Rested', 4]];
+  const days = {};
+  sample.forEach(([m, s, f, taken], i) => {
+    const t = {}; doses.slice(0, taken).forEach((d) => (t[d.id] = true));
+    days[dkey(dayOffset(6 - i))] = { mood: m, sleep: s, feel: f, taken: t, note: '', sample: true };
+  });
+  return { intro: false, theme: 'system', doses, days };
+}
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { state = fresh(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+const todayKey = () => dkey(dayOffset(0));
+const today = () => (state.days[todayKey()] ||= { mood: null, sleep: null, feel: null, taken: {}, note: '' });
+
+/* ---------- Theme ---------- */
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function applyTheme() {
+  if (state.theme === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', state.theme);
+  pips.forEach((p) => p.set(p.l));
+}
+
+/* ---------- Pip ---------- */
+const hx = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, k) => { const p = hx(a), q = hx(b); return '#' + p.map((v, i) => Math.round(v + (q[i] - v) * k).toString(16).padStart(2, '0')).join(''); };
+const col = (l) => (l < .5 ? mix(css('--dusk'), css('--glass'), l * 2) : mix(css('--glass'), css('--amber'), (l - .5) * 2));
+const pips = []; let n = 0;
+function faceSVG(l, closed) {
+  let s = `<circle cx="58" cy="140" r="9" fill="#ff8fa3" opacity="${.12 + .4 * l}"/><circle cx="142" cy="140" r="9" fill="#ff8fa3" opacity="${.12 + .4 * l}"/>`;
+  const st = `stroke="${INK}" stroke-width="5" stroke-linecap="round" fill="none"`;
+  if (closed) return s + `<path d="M62 116 q13 12 26 0 M112 116 q13 12 26 0" ${st}/><path d="M88 148 q12 8 24 0" ${st}/>`;
+  if (l > .78) return s + `<path d="M62 120 q13 -15 26 0 M112 120 q13 -15 26 0" ${st}/><path d="M80 146 q20 24 40 0z" fill="${INK}"/>`;
+  const sad = l < .25, y = sad ? 122 : 116, r = sad ? 7 : 9;
+  s += `<g class="eyes"><ellipse cx="75" cy="${y}" rx="7" ry="${r}" fill="${INK}"/><ellipse cx="125" cy="${y}" rx="7" ry="${r}" fill="${INK}"/><circle cx="77" cy="${y - 4}" r="2.4" fill="#fff"/><circle cx="127" cy="${y - 4}" r="2.4" fill="#fff"/></g>`;
+  if (sad) return s + `<path d="M62 110 L88 102 M138 110 L112 102" ${st} stroke-width="4"/><path d="M82 152 q18 -14 36 0" ${st}/>`;
+  return s + `<path d="M82 148 q18 ${(l - .5) * 40} 36 0" ${st}/>`;
+}
+function pip(el, o = {}) {
+  const id = 'p' + (n++);
+  el.innerHTML = `<svg class="pip${o.drag ? ' drag' : ''}" viewBox="0 0 200 230" ${o.drag ? 'role="slider" tabindex="0" aria-label="Mood" aria-valuemin="0" aria-valuemax="6"' : 'aria-hidden="true" focusable="false"'}><defs><radialGradient id="${id}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".4" class="a"/><stop offset="1" class="b"/></radialGradient></defs><ellipse cx="100" cy="214" rx="64" ry="9" fill="currentColor" opacity=".12"/><g class="bob"><g class="bd" style="transform-origin:100px 205px"><ellipse class="ft" cx="68" cy="205" rx="20" ry="9"/><ellipse class="ft" cx="132" cy="205" rx="20" ry="9"/><path d="M100 40C150 40 177 85 177 132C177 178 146 205 100 205C54 205 23 178 23 132C23 85 50 40 100 40Z" fill="url(#${id})"/><g class="lf" style="transform-origin:100px 46px"><path d="M100 46C100 32 101 22 105 12" stroke="#3f7a52" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M105 16C122 2 144 8 148 26C130 32 113 28 105 16Z" fill="#6fae7f"/></g><g class="fc"></g></g></g></svg>`;
+  const svg = el.firstElementChild, bd = svg.querySelector('.bd'), lf = svg.querySelector('.lf'), fc = svg.querySelector('.fc'), a = svg.querySelector('.a'), b = svg.querySelector('.b'), fts = svg.querySelectorAll('.ft');
+  const p = {
+    l: .5, svg,
+    set(l, snap) {
+      this.l = l;
+      const t = snap && !still ? 'transform .6s cubic-bezier(.3,1.5,.5,1)' : 'none';
+      bd.style.transition = lf.style.transition = t;
+      bd.style.transform = `scale(${1.1 - l * .1},${.86 + l * .2})`;
+      lf.style.transform = `rotate(${55 - l * 63}deg)`;
+      const c = col(l); a.setAttribute('stop-color', c); b.setAttribute('stop-color', mix(c, INK, .22));
+      fts.forEach((f) => f.setAttribute('fill', mix(c, INK, .3)));
+      fc.innerHTML = faceSVG(l, o.closed);
+      if (o.drag) { svg.setAttribute('aria-valuenow', Math.round(l * 6)); svg.setAttribute('aria-valuetext', WORDS[Math.round(l * 6)]); }
+      o.onChange && o.onChange(l);
+    },
+    hop() { if (still) return; svg.classList.remove('hop'); void svg.getBoundingClientRect(); svg.classList.add('hop'); }
+  };
+  if (o.drag) {
+    const from = (e) => { const r = svg.getBoundingClientRect(); p.set(clamp(1 - (e.clientY - r.top) / r.height)); };
+    svg.addEventListener('pointerdown', (e) => { svg.setPointerCapture(e.pointerId); from(e); svg.onpointermove = from; });
+    const end = () => { svg.onpointermove = null; p.set(Math.round(p.l * 6) / 6, true); };
+    svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+    svg.addEventListener('keydown', (e) => {
+      const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); p.set(clamp(Math.round(p.l * 6 + d) / 6), true); }
+    });
+  }
+  pips.push(p); p.set(o.l ?? .5); return p;
+}
+
+/* ---------- Status message ---------- */
+let toastT;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); if (navigator.vibrate) navigator.vibrate(12); }
+
+/* ---------- Navigation between screens ---------- */
+const NOTES = {
+  intro: ['A first meeting, not a form', 'Three short slides, shown only the first time. Pip introduces itself, shows the one gesture the app is built on, and explains the privacy promise in plain words. You can skip it, and replay it from Settings.'],
+  today: ['One screen to start the day', 'Today greets you by the time of day and shows Pip in today\'s mood. Three tiles show what\'s done and what\'s left, and each one opens its screen. Nothing nags: an empty tile just says what to do next.'],
+  mood: ['You move Pip, not a slider', 'Drag Pip to how the day felt. It squashes and stretches, the leaf droops or lifts, and the colour moves from dusk to sea glass to amber. Arrow keys work too. A short optional note helps the week view make sense later.'],
+  sleep: ['Numbers where numbers help', 'Sleep needs an exact amount, so it gets a large figure with thumb-sized buttons. Pip shows it with closed eyes, filling out with more rest. How it felt is just three choices.'],
+  doses: ['Progress without pressure', 'Each dose taken brings Pip closer to its happiest. A missed dose means a quieter Pip, never a red warning. You can add, edit and remove doses, and every row shows a tick and a line through it, so nothing depends on colour.'],
+  breathe: ['A tool in the same voice', 'Pick a calm or box pattern, then breathe with Pip for four rounds. Pip grows as you breathe in and settles as you breathe out. The words lead, so it all works without the animation.'],
+  week: ['One sentence first', 'The week leads with one plain finding, worked out from your entries, then lets you tap any day for the detail. Today fills in as you check in. Earlier days start as sample data and are labelled.'],
+  settings: ['Your data, your choice', 'Choose light, dark or match your system, replay the intro, or clear everything. Data is stored in this browser only.']
+};
+let current = 'today';
+function go(name, focus = true) {
+  if (name !== 'breathe') stopBreathing();
+  document.querySelectorAll('.view').forEach((v) => (v.hidden = v.id !== name));
+  $('tabbar').hidden = name === 'intro';
+  document.querySelectorAll('.tabbar button').forEach((b) => b.toggleAttribute('aria-current', b.dataset.go === name || (name === 'sleep' && b.dataset.go === 'today') || (name === 'settings' && b.dataset.go === 'today')));
+  document.querySelectorAll('.tabbar button[aria-current]').forEach((b) => b.setAttribute('aria-current', 'page'));
+  current = name;
+  $('screens').scrollTop = 0;
+  render(name);
+  const [h, p] = NOTES[name];
+  $('notes').innerHTML = `<h3>${h}</h3><p>${p}</p><p><strong>System:</strong> one character, one typeface (Bricolage Grotesque) and three colours that mean low, steady and high.</p>`;
+  if (focus) $(`${name}-h`)?.focus();
+}
+document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
+
+/* ---------- Intro ---------- */
+const INTRO = [['Hi, I\'m Pip', 'I\'ll help you notice how your days feel, one small check-in at a time.', .9], ['Tell me about your day', 'Drag me up when it felt good and down when it didn\'t. My leaf and face follow.', .5], ['Your data stays with you', 'Check-ins are saved on this device and never sent anywhere.', .7]];
+let introStep = 0;
+const introPip = pip($('introPip'), { l: .9 });
+for (let i = 0; i < 3; i++) $('introDots').append(document.createElement('i'));
+function renderIntro() {
+  const [h, t, l] = INTRO[introStep];
+  $('intro-h').textContent = h; $('introText').textContent = t; introPip.set(l, true);
+  [...$('introDots').children].forEach((d, k) => (d.className = k === introStep ? 'on' : ''));
+  $('introNext').textContent = introStep === 2 ? 'Start my first check-in' : 'Next';
+}
+const finishIntro = (to) => { state.intro = true; save(); go(to); };
+$('introNext').onclick = () => { if (introStep < 2) { introStep++; renderIntro(); $('intro-h').focus(); } else finishIntro('mood'); };
+$('introSkip').onclick = () => finishIntro('today');
+
+/* ---------- Today ---------- */
+const todayPip = pip($('todayPip'), { l: .5 });
+function renderToday() {
+  const h = new Date().getHours();
+  $('today-h').textContent = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  $('todayDate').textContent = new Date().toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long' });
+  const t = today();
+  const taken = state.doses.filter((d) => t.taken[d.id]).length;
+  if (t.mood != null) { todayPip.set(t.mood / 6, true); $('todayMood').textContent = WORDS[t.mood]; $('todayMoodSub').textContent = t.note ? `“${t.note}”` : 'Checked in today'; }
+  else { todayPip.set(.4, true); $('todayMood').textContent = 'No check-in yet'; $('todayMoodSub').textContent = 'How\'s today going?'; }
+  const tile = (id, done, text, tag) => { $(id).textContent = text; $(id + 'Tag').textContent = tag; $(id).closest('.tile').classList.toggle('done', done); };
+  tile('tMood', t.mood != null, t.mood != null ? WORDS[t.mood] : 'Not checked in', t.mood != null ? 'Done' : 'Check in');
+  tile('tSleep', t.sleep != null, t.sleep != null ? `${t.sleep} hours, ${t.feel.toLowerCase()}` : 'Not logged', t.sleep != null ? 'Done' : 'Add');
+  tile('tDoses', state.doses.length > 0 && taken === state.doses.length, state.doses.length ? `${taken} of ${state.doses.length} taken` : 'No doses set up', state.doses.length && taken === state.doses.length ? 'Done' : 'Open');
+}
+
+/* ---------- Mood ---------- */
+const moodPip = pip($('moodPip'), { drag: true, l: .5, onChange: (l) => ($('moodWord').textContent = WORDS[Math.round(l * 6)]) });
+$('moodNote').addEventListener('input', () => ($('noteCount').textContent = `${$('moodNote').value.length} / 140`));
+function renderMood() {
+  const t = today();
+  moodPip.set(t.mood != null ? t.mood / 6 : .5);
+  $('moodNote').value = t.note || ''; $('noteCount').textContent = `${$('moodNote').value.length} / 140`;
+  $('moodSave').textContent = t.mood != null ? 'Update check-in' : 'Save check-in';
+}
+$('moodSave').onclick = () => {
+  const t = today(); const first = t.mood == null;
+  t.mood = Math.round(moodPip.l * 6); t.note = $('moodNote').value.trim(); save();
+  moodPip.hop(); toast(first ? `Saved: ${WORDS[t.mood].toLowerCase()} today` : 'Check-in updated');
+  $('moodSave').textContent = 'Update check-in';
+  if (first && today().sleep == null) setTimeout(() => go('sleep'), 900);
+};
+
+/* ---------- Sleep ---------- */
+let hours = 7.5, feel = 'Okay';
+const sleepPip = pip($('sleepPip'), { closed: true, l: .8 });
+FEELS.forEach((f) => { const b = document.createElement('button'); b.textContent = f; b.onclick = () => { feel = f; syncFeel(); }; $('feel').append(b); });
+const syncFeel = () => [...$('feel').children].forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === feel)));
+const syncSleep = () => { $('hours').textContent = hours.toFixed(1); sleepPip.set(clamp(hours / 9), true); };
+$('lessSleep').onclick = () => { hours = Math.max(0, hours - .5); syncSleep(); };
+$('moreSleep').onclick = () => { hours = Math.min(14, hours + .5); syncSleep(); };
+function renderSleep() { const t = today(); hours = t.sleep ?? 7.5; feel = t.feel ?? 'Okay'; syncSleep(); syncFeel(); $('sleepSave').textContent = t.sleep != null ? 'Update sleep' : 'Save sleep'; }
+$('sleepSave').onclick = () => { const t = today(); t.sleep = hours; t.feel = feel; save(); sleepPip.hop(); toast(`Saved: ${hours} hours`); $('sleepSave').textContent = 'Update sleep'; };
+
+/* ---------- Doses ---------- */
+const dosePip = pip($('dosePip'), { l: .25 });
+let editing = false;
+const fmtTime = (t) => { const [h, m] = t.split(':').map(Number); const d = new Date(); d.setHours(h, m); return d.toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit' }); };
+function renderDoses() {
+  const t = today();
+  const list = [...state.doses].sort((a, b) => a.time.localeCompare(b.time));
+  $('doseList').innerHTML = '';
+  list.forEach((d) => {
+    const li = document.createElement('li');
+    const on = !!t.taken[d.id];
+    li.innerHTML = `<button class="dose" aria-pressed="${on}"><span><b></b><span>${fmtTime(d.time)}</span></span><i aria-hidden="true">✓</i></button>` + (editing ? `<button class="rm" aria-label="Remove ${d.name.replace(/"/g, '')}">×</button>` : '');
+    li.querySelector('b').textContent = d.name;
+    li.querySelector('.dose').onclick = () => { t.taken[d.id] = !t.taken[d.id]; save(); renderDoses(); const all = state.doses.every((x) => t.taken[x.id]); if (all && t.taken[d.id]) { dosePip.hop(); toast('All of today\'s doses taken'); } };
+    const rm = li.querySelector('.rm');
+    if (rm) rm.onclick = () => { state.doses = state.doses.filter((x) => x.id !== d.id); delete t.taken[d.id]; save(); renderDoses(); toast(`Removed ${d.name}`); };
+    $('doseList').append(li);
+  });
+  const taken = state.doses.filter((d) => t.taken[d.id]).length;
+  $('doseCount').textContent = `${taken} of ${state.doses.length} taken`;
+  $('doseEmpty').hidden = state.doses.length > 0;
+  dosePip.set(state.doses.length ? .25 + .75 * taken / state.doses.length : .5, true);
+  $('editDoses').setAttribute('aria-pressed', String(editing)); $('editDoses').textContent = editing ? 'Done' : 'Edit';
+}
+$('editDoses').onclick = () => { editing = !editing; renderDoses(); };
+$('addDose').onclick = () => { $('addForm').hidden = false; $('doseName').focus(); };
+$('cancelDose').onclick = () => { $('addForm').hidden = true; $('doseErr').hidden = true; $('doseName').value = ''; };
+$('addForm').onsubmit = (e) => {
+  e.preventDefault();
+  const name = $('doseName').value.trim();
+  if (!name) { $('doseErr').hidden = false; $('doseName').focus(); return; }
+  state.doses.push({ id: 'd' + Date.now(), name, time: $('doseTime').value || '09:00' }); save();
+  $('doseName').value = ''; $('doseErr').hidden = true; $('addForm').hidden = true; renderDoses(); toast(`Added ${name}`);
+};
+
+/* ---------- Breathe ---------- */
+const PATTERNS = { Calm: [['Breathe in', 4000, 1.16], ['Hold', 2000, 1.16], ['Breathe out', 6000, 1]], Box: [['Breathe in', 4000, 1.16], ['Hold', 4000, 1.16], ['Breathe out', 4000, 1], ['Hold', 4000, 1]] };
+const ROUNDS = 4;
+let pattern = 'Calm', running = false, timer, step = 0;
+const breathePip = pip($('breathePip'), { closed: true, l: .75 });
+Object.keys(PATTERNS).forEach((k) => { const b = document.createElement('button'); b.textContent = k === 'Calm' ? 'Calm (4, 2, 6)' : 'Box (4, 4, 4, 4)'; b.dataset.k = k; b.onclick = () => { if (running) stopBreathing(); pattern = k; syncPattern(); }; $('pattern').append(b); });
+const syncPattern = () => [...$('pattern').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.k === pattern)));
+function breatheStep() {
+  if (!running) return;
+  const ph = PATTERNS[pattern], round = Math.floor(step / ph.length) + 1;
+  if (round > ROUNDS) { stopBreathing(); $('cue').textContent = 'Well done'; $('rounds').textContent = `${ROUNDS} rounds complete`; breathePip.set(.95, true); breathePip.hop(); return; }
+  const [t, ms, sc] = ph[step % ph.length];
+  $('cue').textContent = t; $('rounds').textContent = `Round ${round} of ${ROUNDS}`;
+  $('bw').style.transitionDuration = ms + 'ms'; $('bw').style.transform = `scale(${sc})`;
+  step++; timer = setTimeout(breatheStep, ms);
+}
+function stopBreathing() { running = false; clearTimeout(timer); $('breatheBtn').textContent = 'Start'; $('bw').style.transitionDuration = '1s'; $('bw').style.transform = 'scale(1)'; }
+$('breatheBtn').onclick = () => {
+  if (running) { stopBreathing(); $('cue').textContent = 'Ready when you are'; $('rounds').textContent = ''; return; }
+  running = true; step = 0; breathePip.set(.75); $('breatheBtn').textContent = 'Stop'; breatheStep();
+};
+
+/* ---------- Week ---------- */
+function insight(days) {
+  const both = days.filter((d) => d && d.mood != null && d.sleep != null);
+  if (both.length < 3) return 'Check in for a few more days to see patterns here.';
+  const avg = (a) => a.reduce((s, d) => s + d.mood, 0) / a.length;
+  const long = both.filter((d) => d.sleep >= 8), short = both.filter((d) => d.sleep < 8);
+  if (long.length && short.length) {
+    const diff = avg(long) - avg(short);
+    if (diff >= 1) return 'Your brightest days came after 8 or more hours of sleep.';
+    if (diff <= -1) return 'Your brightest days this week came after shorter nights.';
+  }
+  const best = both.reduce((a, b) => (b.mood > a.mood ? b : a));
+  return `Your best day this week felt ${WORDS[best.mood].toLowerCase()}.`;
+}
+function renderWeek() {
+  const list = []; for (let i = 6; i >= 0; i--) { const d = dayOffset(i); list.push({ date: d, key: dkey(d), data: state.days[dkey(d)] }); }
+  $('insight').textContent = insight(list.map((x) => x.data));
+  $('days').innerHTML = '';
+  list.forEach((x, i) => {
+    const b = document.createElement('button'); b.className = 'day';
+    const label = i === 6 ? 'Today' : DAYNAMES[x.date.getDay()];
+    b.setAttribute('aria-label', label);
+    const holder = document.createElement('div');
+    b.append(holder); b.append(i === 6 ? 'Today' : DAYNAMES[x.date.getDay()][0]);
+    if (x.data && x.data.mood != null) pip(holder, { l: x.data.mood / 6 }); else holder.className = 'none';
+    b.onclick = () => {
+      [...$('days').children].forEach((y) => y.setAttribute('aria-pressed', String(y === b)));
+      const d = x.data || {};
+      const taken = d.taken ? state.doses.filter((q) => d.taken[q.id]).length : 0;
+      $('dayWord').textContent = d.mood != null ? `${label}: ${WORDS[d.mood].toLowerCase()}` : `${label}: no check-in`;
+      const facts = [];
+      if (d.sleep != null) facts.push(`${d.sleep} hours of sleep, ${String(d.feel).toLowerCase()}`);
+      if (state.doses.length) facts.push(`${taken} of ${state.doses.length} doses taken`);
+      $('dayFacts').textContent = facts.join('. ') + (facts.length ? '.' : '');
+      $('dayNote').textContent = d.note ? `“${d.note}”` : '';
+      $('daySample').hidden = !d.sample;
+    };
+    $('days').append(b);
+  });
+  $('days').lastElementChild.click();
+}
+
+/* ---------- Settings ---------- */
+[['system', 'System'], ['light', 'Light'], ['dark', 'Dark']].forEach(([k, label]) => { const b = document.createElement('button'); b.textContent = label; b.dataset.k = k; b.onclick = () => { state.theme = k; save(); applyTheme(); syncTheme(); }; $('theme').append(b); });
+const syncTheme = () => [...$('theme').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.k === state.theme)));
+$('openSettings').onclick = () => go('settings');
+$('closeSettings').onclick = () => go('today');
+$('replayIntro').onclick = () => { introStep = 0; renderIntro(); go('intro'); };
+let resetArmed = false, resetT;
+$('resetData').onclick = () => {
+  if (!resetArmed) { resetArmed = true; $('resetData').textContent = 'Select again to reset everything'; resetT = setTimeout(() => { resetArmed = false; $('resetData').textContent = 'Reset all data'; }, 4000); return; }
+  clearTimeout(resetT); resetArmed = false; $('resetData').textContent = 'Reset all data';
+  const theme = state.theme; state = fresh(); state.theme = theme; state.intro = true; save(); toast('All data reset'); go('today');
+};
+
+/* ---------- Render the current screen ---------- */
+function render(name) {
+  if (name === 'today') renderToday();
+  if (name === 'mood') renderMood();
+  if (name === 'sleep') renderSleep();
+  if (name === 'doses') renderDoses();
+  if (name === 'breathe') { syncPattern(); $('cue').textContent = 'Ready when you are'; $('rounds').textContent = ''; }
+  if (name === 'week') renderWeek();
+  if (name === 'settings') syncTheme();
+}
+
+/* ---------- Start ---------- */
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pips.forEach((p) => p.set(p.l)));
+if (!state.intro) { renderIntro(); go('intro', false); } else go('today', false);
+})();
+</script>
+</body>
+</html>

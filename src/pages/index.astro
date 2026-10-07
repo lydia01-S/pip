@@ -1,16 +1,436 @@
 ---
+// src/pages/index.astro
+import Base from './layout/Base.astro'; // must match your layout file's name exactly
+import SiteMenu from './components/SiteMenu.astro';
+
+// Links
+const APP_URL = "/pip-app"; // the live app, on this site
+const CASE_URL = "/pip"; // the case study, on this site
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base
+  title="Pip: a mood tracker you move, not tap"
+  description="Pip is a small wellbeing companion with a leaf on its head. Drag it to show how your day felt, track sleep and doses, and see your week at a glance."
+>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="bar">
+    <a class="brand" href="/" aria-label="Pip home"><span class="brand-dot" aria-hidden="true"></span>Pip</a>
+    <nav aria-label="Main">
+      <a class="btn small" href={APP_URL}>Try the app</a>
+      <SiteMenu current="home" />
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero: the live Pip -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">A mood tracker you move, not tap.</h1>
+        <p class="lead">Pip is a small wellbeing companion with a leaf on its head. Drag it up on a good day and down on a hard one, and its leaf, colour and face follow.</p>
+        <div class="actions">
+          <a class="btn" href={APP_URL}>Try the live app</a>
+          <a class="btn ghost" href={CASE_URL}>Read the case study</a>
+        </div>
+      </div>
+      <figure class="hero-pip">
+        <div id="heroPip"></div>
+        <figcaption>
+          <span class="mood-word" id="heroWord" aria-live="polite">Steady</span>
+          <span class="hint">Drag Pip, or select it and use the arrow keys</span>
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- Statement: the words fill in as you scroll -->
+    <section class="statement" aria-label="Why Pip">
+      <div class="statement-inner">
+        <p class="statement-text" id="statement">Most mood trackers give you a row of faces and ask you to pick one. Pip lets you show how the day felt, then keeps every check-in in the same character, so a whole week reads at a glance.</p>
+      </div>
+    </section>
+
+    <!-- What Pip does: tabs -->
+    <section class="does" aria-labelledby="does-title">
+      <h2 id="does-title">What Pip does</h2>
+      <div class="tabs">
+        <div role="tablist" aria-label="What Pip does">
+          <button role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true">Check in</button>
+          <button role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" tabindex="-1">Look after yourself</button>
+          <button role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" tabindex="-1">See your week</button>
+        </div>
+        <div role="tabpanel" id="panel-1" aria-labelledby="tab-1" tabindex="0">
+          <p>One gesture a day. Drag Pip to how the day felt and save it. Sleep gets an exact number of hours, plus three simple choices for how it felt: restless, okay or rested.</p>
+        </div>
+        <div role="tabpanel" id="panel-2" aria-labelledby="tab-2" tabindex="0" hidden>
+          <p>Tick off today's doses without red warnings. A missed dose just means a quieter Pip. When you need a moment, breathe with Pip as it grows and settles, with each cue written in large type.</p>
+        </div>
+        <div role="tabpanel" id="panel-3" aria-labelledby="tab-3" tabindex="0" hidden>
+          <p>Seven small Pips, one for each day, with one plain sentence about what stands out. Tap any day for its sleep, mood and doses.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Marquee: the seven moods, each in its own colour -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track" id="marquee"></div>
+    </div>
+    <p class="sr">Pip has seven moods, from Drained through Low, Flat, Steady, Light and Good to Glowing.</p>
+
+    <!-- A day with Pip: cards stack as you scroll -->
+    <section class="day" aria-labelledby="day-title">
+      <h2 id="day-title">Six screens, one character</h2>
+      <ol class="stack">
+        <li class="card" style="--i:0; --tint:#dfe8f6">
+          <div class="card-copy"><h3>Hello</h3><p>Three short slides. Pip introduces itself, shows the one gesture the app is built on, and explains in plain words that your data stays on your phone.</p></div>
+          <img src="/pip-welcome.png" alt="Pip's welcome screen, with the character and a Next button" width="786" height="1704" loading="lazy" />
+        </li>
+        <li class="card" style="--i:1; --tint:#e4dff6">
+          <div class="card-copy"><h3>How was today?</h3><p>Move Pip instead of a slider. It squashes down and stretches up, and its colour shifts from dusk to sea glass to amber.</p></div>
+          <img src="/pip-mood.png" alt="Mood check-in screen with Pip and the word Steady" width="786" height="1704" loading="lazy" />
+        </li>
+        <li class="card" style="--i:2; --tint:#dcefe8">
+          <div class="card-copy"><h3>Sleep</h3><p>A large number with thumb-sized buttons, and Pip with its eyes closed, filling out with more rest.</p></div>
+          <img src="/pip-sleep.png" alt="Sleep screen showing 7.5 hours with plus and minus buttons" width="786" height="1704" loading="lazy" />
+        </li>
+        <li class="card" style="--i:3; --tint:#f6ecd6">
+          <div class="card-copy"><h3>Today's doses</h3><p>Every dose taken brings Pip a little closer to its happiest. Each row shows a tick and a line through it, so nothing depends on colour.</p></div>
+          <img src="/pip-doses.png" alt="Doses screen listing four doses with tick boxes" width="786" height="1704" loading="lazy" />
+        </li>
+        <li class="card" style="--i:4; --tint:#dcefe8">
+          <div class="card-copy"><h3>Breathe</h3><p>Pip grows as you breathe in and settles as you breathe out. The words lead, so it works without the animation too.</p></div>
+          <img src="/pip-breathe.png" alt="Breathing screen with a large Pip and the cue Breathe in" width="786" height="1704" loading="lazy" />
+        </li>
+        <li class="card" style="--i:5; --tint:#e4dff6">
+          <div class="card-copy"><h3>Your week</h3><p>One sentence first, then seven Pips. Patterns are easy to spot because every day uses the same character.</p></div>
+          <img src="/pip-week.png" alt="Week screen with seven small Pips, one for each day" width="786" height="1704" loading="lazy" />
+        </li>
+      </ol>
+    </section>
+
+    <!-- Closing statement, revealed line by line -->
+    <section class="close" aria-labelledby="close-title">
+      <h2 id="close-title" class="close-lines">
+        <span class="line"><span>Small check-ins.</span></span>
+        <span class="line"><span>A kinder record</span></span>
+        <span class="line"><span>of your days.</span></span>
+      </h2>
+      <div class="actions">
+        <a class="btn" href={APP_URL}>Try the live app</a>
+        <a class="btn ghost" href={CASE_URL}>Read the case study</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Pip is a concept app, designed and built by Lydia Stewart</p>
+    <p>All data in the live app is sample data.</p>
+  </footer>
+
+  <!-- A small Pip that docks in the corner and gets happier as you scroll -->
+  <div class="dock" id="dock" aria-hidden="true"></div>
+</Base>
+
+<script is:inline>
+(() => {
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const INK = '#0e2a2f';
+  const DUSK = '#8a7bd8', GLASS = '#4fb9a1', AMBER = '#f0a92e';
+  const WORDS = ['Drained', 'Low', 'Flat', 'Steady', 'Light', 'Good', 'Glowing'];
+
+  // ----- Colour helpers: Pip's colour moves from dusk to sea glass to amber
+  const hx = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const mix = (a, b, k) => { const p = hx(a), q = hx(b); return '#' + p.map((v, i) => Math.round(v + (q[i] - v) * k).toString(16).padStart(2, '0')).join(''); };
+  const col = (l) => (l < .5 ? mix(DUSK, GLASS, l * 2) : mix(GLASS, AMBER, (l - .5) * 2));
+
+  // ----- Pip, drawn as an SVG
+  let n = 0;
+  function face(l, closed) {
+    const st = `stroke="${INK}" stroke-width="5" stroke-linecap="round" fill="none"`;
+    let s = `<circle cx="58" cy="140" r="9" fill="#ff8fa3" opacity="${.12 + .4 * l}"/><circle cx="142" cy="140" r="9" fill="#ff8fa3" opacity="${.12 + .4 * l}"/>`;
+    if (closed) return s + `<path d="M62 116 q13 12 26 0 M112 116 q13 12 26 0" ${st}/><path d="M88 148 q12 8 24 0" ${st}/>`;
+    if (l > .78) return s + `<path d="M62 120 q13 -15 26 0 M112 120 q13 -15 26 0" ${st}/><path d="M80 146 q20 24 40 0z" fill="${INK}"/>`;
+    const sad = l < .25, y = sad ? 122 : 116, r = sad ? 7 : 9;
+    s += `<g class="eyes"><ellipse cx="75" cy="${y}" rx="7" ry="${r}" fill="${INK}"/><ellipse cx="125" cy="${y}" rx="7" ry="${r}" fill="${INK}"/><circle cx="77" cy="${y - 4}" r="2.4" fill="#fff"/><circle cx="127" cy="${y - 4}" r="2.4" fill="#fff"/></g>`;
+    if (sad) return s + `<path d="M62 110 L88 102 M138 110 L112 102" ${st} stroke-width="4"/><path d="M82 152 q18 -14 36 0" ${st}/>`;
+    return s + `<path d="M82 148 q18 ${(l - .5) * 40} 36 0" ${st}/>`;
+  }
+  function pip(el, o = {}) {
+    const id = 'pg' + (n++);
+    el.innerHTML = `<svg class="pip${o.drag ? ' drag' : ''}" viewBox="0 0 200 230" ${o.drag ? 'role="slider" tabindex="0" aria-label="How was today? Pip\'s mood" aria-valuemin="0" aria-valuemax="6"' : 'aria-hidden="true" focusable="false"'}>
+      <defs><radialGradient id="${id}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".4" class="a"/><stop offset="1" class="b"/></radialGradient></defs>
+      <ellipse cx="100" cy="214" rx="64" ry="9" fill="currentColor" opacity=".12"/>
+      <g class="bob"><g class="bd" style="transform-origin:100px 205px">
+        <ellipse class="ft" cx="68" cy="205" rx="20" ry="9"/><ellipse class="ft" cx="132" cy="205" rx="20" ry="9"/>
+        <path d="M100 40C150 40 177 85 177 132C177 178 146 205 100 205C54 205 23 178 23 132C23 85 50 40 100 40Z" fill="url(#${id})"/>
+        <g class="lf" style="transform-origin:100px 46px"><path d="M100 46C100 32 101 22 105 12" stroke="#3f7a52" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M105 16C122 2 144 8 148 26C130 32 113 28 105 16Z" fill="#6fae7f"/></g>
+        <g class="fc"></g>
+      </g></g></svg>`;
+    const svg = el.firstElementChild, bd = svg.querySelector('.bd'), lf = svg.querySelector('.lf'), fc = svg.querySelector('.fc'),
+      a = svg.querySelector('.a'), b = svg.querySelector('.b'), fts = svg.querySelectorAll('.ft');
+    let lastFace = '';
+    const p = {
+      l: .5,
+      set(l, snap) {
+        this.l = l;
+        const t = snap && !still ? 'transform .6s cubic-bezier(.3,1.5,.5,1)' : 'none';
+        bd.style.transition = lf.style.transition = t;
+        bd.style.transform = `scale(${1.1 - l * .1},${.86 + l * .2})`;
+        lf.style.transform = `rotate(${55 - l * 63}deg)`;
+        const c = col(l);
+        a.setAttribute('stop-color', c); b.setAttribute('stop-color', mix(c, INK, .22));
+        fts.forEach((f) => f.setAttribute('fill', mix(c, INK, .3)));
+        const key = o.closed ? 'c' : String(Math.round(l * 20));
+        if (key !== lastFace) { fc.innerHTML = face(l, o.closed); lastFace = key; }
+        if (o.drag) { const w = WORDS[Math.round(l * 6)]; svg.setAttribute('aria-valuenow', Math.round(l * 6)); svg.setAttribute('aria-valuetext', w); }
+        o.onChange && o.onChange(l);
+      }
+    };
+    if (o.drag) {
+      const from = (e) => { const r = svg.getBoundingClientRect(); p.set(clamp(1 - (e.clientY - r.top) / r.height)); };
+      svg.addEventListener('pointerdown', (e) => { svg.setPointerCapture(e.pointerId); from(e); svg.onpointermove = from; });
+      const end = () => { svg.onpointermove = null; p.set(Math.round(p.l * 6) / 6, true); };
+      svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+      svg.addEventListener('keydown', (e) => {
+        const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key];
+        if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); p.set(e.key === 'Home' ? 0 : 1, true); return; }
+        if (d) { e.preventDefault(); p.set(clamp(Math.round(p.l * 6 + d) / 6), true); }
+      });
+    }
+    p.set(o.l ?? .5);
+    return p;
+  }
+
+  // ----- Hero Pip you can drag
+  const heroPip = pip($('heroPip'), { drag: true, l: .5, onChange: (l) => { $('heroWord').textContent = WORDS[Math.round(l * 6)]; } });
+
+  // ----- Docked Pip: its mood follows how far down the page you are
+  const dock = pip($('dock'), { l: .2 });
+
+  // ----- Statement: wrap each word so it can fill in
+  const st = $('statement');
+  const words = st.textContent.trim().split(/\s+/);
+  st.setAttribute('aria-label', st.textContent.trim());
+  st.innerHTML = words.map((w) => `<span class="w" aria-hidden="true">${w}</span>`).join(' ');
+  const wordEls = [...st.querySelectorAll('.w')];
+
+  // ----- Marquee: the seven moods, coloured along Pip's scale
+  const mq = $('marquee');
+  const group = WORDS.map((w, i) => `<span class="mq-word" style="color:${mix(col(i / 6), INK, .25)}">${w}</span><span class="mq-leaf"></span>`).join('');
+  mq.innerHTML = `<div class="mq-group">${group}</div><div class="mq-group">${group}</div>`;
+
+  // ----- Tabs
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const select = (t, focus) => {
+    tabs.forEach((x) => {
+      const on = x === t;
+      x.setAttribute('aria-selected', String(on)); x.tabIndex = on ? 0 : -1;
+      $(x.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) t.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length], true); }
+      if (e.key === 'Home') { e.preventDefault(); select(tabs[0], true); }
+      if (e.key === 'End') { e.preventDefault(); select(tabs[tabs.length - 1], true); }
+    });
+  });
+
+  // ----- Closing lines reveal once, when they come into view
+  const close = document.querySelector('.close-lines');
+  if (still) close.classList.add('in');
+  else new IntersectionObserver((es, ob) => es.forEach((e) => { if (e.isIntersecting) { close.classList.add('in'); ob.disconnect(); } }), { threshold: .4 }).observe(close);
+
+  // ----- Everything tied to scroll runs in one loop
+  const statementSec = document.querySelector('.statement');
+  const cards = [...document.querySelectorAll('.card')];
+  const hero = document.querySelector('.hero');
+  const dockEl = $('dock');
+  let mqX = 0, lastY = scrollY, vel = 0, dir = 1, lastT = performance.now(), mqVisible = true;
+  new IntersectionObserver((es) => es.forEach((e) => { mqVisible = e.isIntersecting; })).observe(document.querySelector('.marquee'));
+
+  function frame(t) {
+    const dt = Math.min(64, t - lastT); lastT = t;
+    const y = scrollY, vh = innerHeight;
+    const dy = y - lastY; lastY = y;
+    vel = vel * .9 + dy * .1;
+    if (Math.abs(dy) > .5) dir = dy > 0 ? 1 : -1;
+
+    // Statement: words fill in from faint to full as the section passes
+    if (still) wordEls.forEach((w) => w.style.opacity = 1);
+    else {
+      const r = statementSec.getBoundingClientRect();
+      const prog = clamp((vh * .75 - r.top) / (r.height - vh * .4));
+      const lit = prog * wordEls.length;
+      wordEls.forEach((w, i) => { w.style.opacity = (.16 + .84 * clamp(lit - i)).toFixed(3); });
+    }
+
+    // Cards: each one settles back slightly as the next slides over it
+    cards.forEach((c, i) => {
+      const next = cards[i + 1];
+      if (!next || still) { c.style.setProperty('--s', 1); c.style.setProperty('--dim', 0); return; }
+      const top = parseFloat(getComputedStyle(c).top) || 0;
+      const p = clamp(1 - (next.getBoundingClientRect().top - top) / (vh * .85));
+      c.style.setProperty('--s', (1 - p * .06).toFixed(4));
+      c.style.setProperty('--dim', (p * .35).toFixed(3));
+    });
+
+    // Marquee: drifts on its own, speeds up and follows the direction you scroll
+    if (!still && mqVisible) {
+      const half = mq.scrollWidth / 2;
+      mqX -= dir * (0.045 + Math.min(1.2, Math.abs(vel) * .02)) * dt;
+      if (mqX <= -half) mqX += half; if (mqX > 0) mqX -= half;
+      mq.style.transform = `translate3d(${mqX}px,0,0)`;
+    }
+
+    // Docked Pip: appears after the hero, and gets happier the further you scroll
+    const max = document.documentElement.scrollHeight - vh;
+    const pastHero = hero.getBoundingClientRect().bottom < vh * .25;
+    dockEl.classList.toggle('show', pastHero);
+    const target = .12 + .85 * clamp(y / Math.max(1, max));
+    if (Math.abs(target - dock.l) > .004) dock.set(dock.l + (target - dock.l) * (still ? 1 : .12));
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<style is:global>
+  :root {
+    --bg: #e6ede4; --ink: #0e2a2f; --mute: #46605f; --card: #f6f9f3; --line: #b8c9c0; --line-strong: #718a84;
+    --dusk: #8a7bd8; --glass: #4fb9a1; --amber: #f0a92e;
+    --font: 'Bricolage Grotesque', system-ui, sans-serif;
+    --pad: clamp(20px, 5vw, 72px);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 18px/1.55 var(--font); font-optical-sizing: auto; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  img { max-width: 100%; height: auto; display: block; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; border-radius: 8px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip { position: absolute; left: -999px; top: 10px; z-index: 100; padding: 10px 18px; border-radius: 999px; background: var(--card); color: var(--ink); font-weight: 600; }
+  .skip:focus { left: 12px; }
+
+  h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -.035em; line-height: .98; text-wrap: balance; }
+  h2 { font-size: clamp(2.2rem, 5.2vw, 4.4rem); }
+  h3 { font-size: clamp(1.7rem, 3vw, 2.4rem); }
+
+  /* Header */
+  .bar { position: sticky; top: 0; z-index: 30; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px var(--pad); background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 22px; letter-spacing: -.03em; text-decoration: none; min-height: 44px; }
+  .brand-dot { width: 14px; height: 18px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--glass); }
+  .bar nav { display: flex; align-items: center; gap: 8px; }
+  .bar nav > a:not(.btn) { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font-weight: 600; text-decoration: none; border-radius: 999px; }
+  .bar nav > a:not(.btn):hover { text-decoration: underline; text-underline-offset: 5px; }
+
+  /* Buttons */
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 26px; border-radius: 18px; background: var(--ink); color: var(--bg); font-weight: 600; font-size: 17px; text-decoration: none; border: 2px solid var(--ink); transition: transform .15s, background .2s, color .2s; }
+  .btn:hover { background: var(--glass); color: var(--ink); border-color: var(--ink); }
+  .btn:active { transform: scale(.98); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+  .btn.ghost:hover { border-color: var(--ink); background: var(--card); }
+  .btn.small { min-height: 44px; padding: 0 16px; font-size: 15px; border-radius: 14px; }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: clamp(24px, 4vw, 64px); min-height: calc(100svh - 72px); padding: clamp(24px, 4vw, 48px) var(--pad) clamp(48px, 7vw, 96px); }
+  .hero h1 { font-size: clamp(3rem, 7.6vw, 7.2rem); max-width: 11ch; }
+  .lead { font-size: clamp(18px, 1.6vw, 21px); color: var(--mute); max-width: 44ch; margin: 28px 0 32px; }
+  .hero-pip { margin: 0; display: grid; justify-items: center; gap: 12px; }
+  #heroPip { width: min(400px, 74vw); }
+  .hero-pip figcaption { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .mood-word { font-size: clamp(2.4rem, 4.4vw, 3.6rem); font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+  .hint { font-size: 14px; color: var(--mute); }
+
+  .pip { width: 100%; height: auto; display: block; color: var(--ink); overflow: visible; }
+  .pip.drag { cursor: grab; touch-action: none; }
+  .pip.drag:active { cursor: grabbing; }
+  .pip:focus-visible { outline-offset: 10px; border-radius: 40px; }
+  .bob { animation: bob 3.2s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translateY(-6px); } }
+  .eyes { animation: blink 5s infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+
+  /* Statement */
+  .statement { position: relative; height: 230vh; }
+  .statement-inner { position: sticky; top: 0; height: 100svh; display: grid; align-items: center; padding: 0 var(--pad); }
+  .statement-text { margin: 0; max-width: 22ch; font-size: clamp(2.1rem, 5.4vw, 5rem); font-weight: 800; letter-spacing: -.04em; line-height: 1.02; }
+  .statement-text .w { transition: opacity .12s linear; }
+
+  /* What Pip does */
+  .does { display: grid; grid-template-columns: 1fr 1.4fr; gap: clamp(24px, 5vw, 80px); align-items: start; padding: clamp(64px, 9vw, 140px) var(--pad); border-top: 2px solid var(--ink); }
+  [role="tablist"] { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  [role="tab"] { min-height: 48px; padding: 0 20px; border-radius: 999px; border: 2px solid var(--line-strong); background: transparent; color: var(--ink); font: 600 16px var(--font); cursor: pointer; }
+  [role="tab"]:hover { border-color: var(--ink); }
+  [role="tab"][aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  [role="tabpanel"] p { margin: 0; font-size: clamp(21px, 2.2vw, 28px); line-height: 1.4; letter-spacing: -.01em; max-width: 34ch; }
+
+  /* Marquee */
+  .marquee { overflow: hidden; padding: clamp(20px, 3vw, 36px) 0; border-block: 2px solid var(--ink); background: var(--card); }
+  .marquee-track { display: flex; width: max-content; will-change: transform; }
+  .mq-group { display: flex; align-items: center; }
+  .mq-word { font-size: clamp(3rem, 9vw, 8rem); font-weight: 800; letter-spacing: -.05em; line-height: 1; padding: 0 .25em; }
+  .mq-leaf { width: clamp(22px, 2.6vw, 36px); height: clamp(28px, 3.4vw, 46px); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--line); margin: 0 .4em; flex: none; }
+
+  /* Six screens: stacking cards */
+  .day { padding: clamp(72px, 10vw, 160px) var(--pad) clamp(40px, 6vw, 80px); }
+  .day > h2 { max-width: 12ch; margin-bottom: clamp(32px, 5vw, 64px); }
+  .stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 22vh; }
+  .card { position: sticky; top: calc(86px + var(--i) * 14px); display: grid; grid-template-columns: 1.2fr minmax(180px, 300px); gap: clamp(20px, 4vw, 56px); align-items: center; min-height: min(78svh, 680px);
+    padding: clamp(24px, 4vw, 56px); border-radius: 36px; background: var(--tint); border: 2px solid var(--ink);
+    transform: scale(var(--s, 1)); transform-origin: 50% 0; filter: brightness(calc(1 - var(--dim, 0) * .35)); }
+  .card-copy p { margin: 16px 0 0; font-size: clamp(18px, 1.7vw, 22px); color: #2c4446; max-width: 34ch; }
+  .card img { width: 100%; max-height: 62svh; object-fit: contain; border-radius: 28px; justify-self: center; box-shadow: 0 24px 50px -24px rgba(14, 42, 47, .55); }
+
+  /* Closing */
+  .close { padding: clamp(80px, 12vw, 200px) var(--pad) clamp(64px, 8vw, 120px); }
+  .close-lines { font-size: clamp(3rem, 9vw, 8.6rem); line-height: .95; margin-bottom: clamp(32px, 5vw, 56px); }
+  .line { display: block; overflow: hidden; padding-bottom: .06em; }
+  .line > span { display: inline-block; transform: translateY(105%); transition: transform .9s cubic-bezier(.2, .8, .2, 1); }
+  .line:nth-child(2) > span { transition-delay: .12s; }
+  .line:nth-child(3) > span { transition-delay: .24s; }
+  .close-lines.in .line > span { transform: none; }
+
+  .foot { padding-right: calc(var(--pad) + 64px) !important; }
+  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 28px var(--pad) calc(28px + env(safe-area-inset-bottom, 0px)); border-top: 2px solid var(--ink); font-size: 15px; color: var(--mute); }
+  .foot p { margin: 0; }
+  .foot a { color: var(--ink); font-weight: 600; text-underline-offset: 4px; }
+
+  /* Docked Pip */
+  .dock { position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 20; width: 64px; opacity: 0; transform: translateY(16px) scale(.9); transition: opacity .3s, transform .3s; pointer-events: none; }
+  .dock.show { opacity: 1; transform: none; }
+
+  /* Tablets and phones */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; min-height: auto; text-align: left; }
+    .hero-pip { order: -1; }
+    #heroPip { width: min(240px, 58vw); }
+    .does { grid-template-columns: 1fr; }
+    .card { grid-template-columns: 1fr; min-height: auto; top: calc(76px + var(--i) * 10px); border-radius: 28px; }
+    .card img { max-height: 46svh; width: auto; }
+    .stack { gap: 14vh; }
+  }
+  @media (max-width: 560px) {
+    .bar nav > a:not(.btn) { display: none; }
+    .actions .btn { flex: 1 1 100%; }
+    .statement { height: 190vh; }
+    .dock { width: 44px; right: 10px; }
+  }
+
+  /* Reduced motion: everything is visible and still */
+  @media (prefers-reduced-motion: reduce) {
+    .bob, .eyes { animation: none; }
+    .btn, .dock, .statement-text .w { transition: none; }
+    .line > span { transform: none; transition: none; }
+    .statement { height: auto; }
+    .statement-inner { position: static; height: auto; padding-block: clamp(64px, 10vw, 140px); }
+    .card { position: static; transform: none; filter: none; }
+    .stack { gap: 24px; }
+  }
+</style>
